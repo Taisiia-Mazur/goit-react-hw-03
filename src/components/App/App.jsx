@@ -1,55 +1,49 @@
 import { useState, useEffect } from "react";
 
-import Description from "../Description/Description";
-import Notification from "../Notification/Notification";
-import Options from "../Options/Options";
-import Feedback from "../Feedback/Feedback";
+import ContactForm from "../ContactForm/ContactForm";
+import ContactList from "../ContactList/ContactList";
+import SearchBox from "../SearchBox/SearchBox";
 
 export default function App() {
-  const [value, setValue] = useState(() => {
-    const savedValues = window.localStorage.getItem("saved-value");
-    return savedValues
-      ? JSON.parse(savedValues)
-      : {
-          good: 0,
-          neutral: 0,
-          bad: 0,
-        };
+  const [contacts, setContacts] = useState(() => {
+    const savedContacts = localStorage.getItem("contacts");
+    return savedContacts
+      ? JSON.parse(savedContacts)
+      : [
+          { id: "id-1", name: "Rosie Simpson", number: "459-12-56" },
+          { id: "id-2", name: "Hermione Kline", number: "443-89-12" },
+          { id: "id-3", name: "Eden Clements", number: "645-17-79" },
+          { id: "id-4", name: "Annie Copeland", number: "227-91-26" },
+        ];
   });
+  const [filter, setFilter] = useState("");
 
-  useEffect(() => {
-    window.localStorage.setItem("saved-value", JSON.stringify(value));
-  }, [value]);
-
-  const updateFeedback = (feedbackType) => {
-    setValue({ ...value, [feedbackType]: value[feedbackType] + 1 });
+  const deleteContact = (contactId) => {
+    setContacts((prevContact) => {
+      return prevContact.filter((contact) => contact.id !== contactId);
+    });
   };
 
-  const resetValue = () => setValue({ good: 0, neutral: 0, bad: 0 });
+  const filteredContacts = contacts.filter((contact) =>
+    contact.name.toLowerCase().includes(filter.toLowerCase())
+  );
 
-  const totalFeedback = value.good + value.neutral + value.bad;
-  const persent = Math.round((value.good / totalFeedback) * 100);
+  useEffect(() => {
+    localStorage.setItem("contacts", JSON.stringify(contacts));
+  });
+
+  const addContact = (newContact) => {
+    setContacts((prevContact) => {
+      return [...prevContact, newContact];
+    });
+  };
 
   return (
-    <>
-      <Description />
-
-      <Options
-        click={updateFeedback}
-        feedback={Object.keys(value)}
-        totalValue={totalFeedback}
-        reset={resetValue}
-      />
-      {totalFeedback === 0 ? (
-        <Notification />
-      ) : (
-        <Feedback
-          value={value}
-          feedback={Object.keys(value)}
-          totalValue={totalFeedback}
-          persent={persent}
-        />
-      )}
-    </>
+    <div>
+      <h1>Phonebook</h1>
+      <ContactForm addContact={addContact} />
+      <SearchBox value={filter} onFilter={setFilter} />
+      <ContactList contacts={filteredContacts} onDelete={deleteContact} />
+    </div>
   );
 }
